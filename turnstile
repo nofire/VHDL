@@ -1,0 +1,99 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+ENTITY turnstile IS{
+      PORT(
+            reset, clk, on, s1, s2, card_available, card_valid            		  :   IN STD_LOGIC;
+            Led_green, Led_red, card_invalid_eject, card_valid_void_eject, motor, lockbar :   OUT STD_LOGIC;
+      );
+
+END turnstile;
+
+ARCHITECTUR behav OF turnstile IS
+  BEGIN
+    PROCESS(reset, clk, on, s1, s2, card_available, card_valid) IS
+
+    	TYPE STATE IS(off, closed, proof_card, eject_card_valid, eject_card_invalid, open, not_open);
+	VARIABLE v_state: STATE;
+	VARIABLE var_output_vector(7 DOWNTO 0);
+	
+  BEGIN
+	IF (reset = '1') THEN
+		v_state := off;
+	ELSIF (CLK'event AND CLK = '1') THEN
+
+		CASE v_state IS
+			WHEN off =>
+				IF (on = '1') THEN
+					v_state := closed;
+				ELSIF (on = '0') THEN
+					v_state := off;
+				END IF;
+        		WHEN closed =>
+				IF (on = '0') THEN	
+					v_state := off;
+				ELSIF ((on = '1') AND (card_available = '1')) THEN	
+					v_state := proof_card;
+				END IF;
+			
+			WHEN proof_card =>	
+				IF (card_valid = '1') THEN
+					v_state := eject_card_valid;
+				ELSIF (card_valid = '0') THEN
+					v_state := eject_card_invalid;
+				END IF;
+			WHEN eject_card_valid =>
+				IF (s2 = '1') THEN
+					v_state := open;
+				END IF;
+			WHEN eject_card_invalid =>
+				IF (s1 = '1') THEN
+					v_state := closed;
+				END IF;
+			WHEN open =>
+				IF (s2 = '1') THEN
+					v_state := schließen;
+				END IF;
+			WHEN not_open =>
+				IF (s1 = '1') THEN
+					v_state := off;
+				END IF;
+			WHEN others =>
+				v_state := off;
+		END CASE;
+	END IF;
+
+	CASE v_state IS
+		WHEN off =>
+			var_output_vector :="00 00 00 01";
+
+		WHEN closed =>
+			var_output_vector :="00 01 00 01";
+
+		WHEN proof_card =>
+			var_output_vector :="00 01 00 01";
+
+		WHEN eject_card_valid =>
+			var_output_vector :="00 01 01 01";
+		
+		WHEN eject_card_invalid =>
+			var_output_vector :="00 01 10 01";
+		
+		WHEN open =>
+			var_output_vector :="00 10 00 00";
+		
+		WHEN not_open =>
+			var_output_vector :="00 01 00 10";
+	END CASE;
+
+		card_available          <= var_output_vector(7);
+		card_valid     		      <= var_output_vector(6);
+		led_green      		      <= var_output_vector(5);
+		led_red        	        <= var_output_vector(4);
+		card_invalid_eject      <= var_output_vector(3);
+		card_valid_void_eject   <= var_output_vector(2);
+		motor 			            <= var_output_vector(1);
+		lockbar			            <= var_output_vector(0);
+
+	END PROCESS;	
+END behav;
