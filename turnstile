@@ -15,7 +15,7 @@ ARCHITECTUR behav OF turnstile IS
 
     	TYPE STATE IS(off, closed, proof_card, eject_card_valid, eject_card_invalid, open, not_open);
 	VARIABLE v_state: STATE;
-	VARIABLE var_output_vector(7 DOWNTO 0);
+	VARIABLE var_output_vector(5 DOWNTO 0);
 	
   BEGIN
 	IF (reset = '1') THEN
@@ -86,14 +86,12 @@ ARCHITECTUR behav OF turnstile IS
 			var_output_vector :="00 01 00 10";
 	END CASE;
 
-		card_available          <= var_output_vector(7);
-		card_valid     		      <= var_output_vector(6);
-		led_green      		      <= var_output_vector(5);
+		led_green      		<= var_output_vector(5);
 		led_red        	        <= var_output_vector(4);
 		card_invalid_eject      <= var_output_vector(3);
 		card_valid_void_eject   <= var_output_vector(2);
-		motor 			            <= var_output_vector(1);
-		lockbar			            <= var_output_vector(0);
+		motor 		 	<= var_output_vector(1);
+		lockbar			<= var_output_vector(0);
 
 	END PROCESS;	
 END behav;
